@@ -123,7 +123,7 @@ public class MainActivity extends Activity {
                     Response response = okHttpClient.newCall(request).execute();
                     Log.d("msg", response.body().toString());
                     */
-                    URL url = new URL("http://192.168.213.71:8080/index.php"); //attribute : the link to get the data
+                    URL url = new URL("http://192.168.99.100:8080/index.php"); //attribute : the link to get the data
                     conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
                     conn.setReadTimeout(6*1000);
