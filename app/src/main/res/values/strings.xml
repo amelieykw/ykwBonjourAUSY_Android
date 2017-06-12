@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">BonjourAUSY</string>
+    <string name="je_suis">Je suis</string>
+    <string name="quelle_type_application">Quelle application souhaitez-vous installer?</string>
+    <string name="selection_agence">Sélectionnez votre agence</string>
+    <string name="suivant">Suivant ></string>
+    <string name="manager_rdv_header">Validez votre RDV</string>
+    <string name="manager_rdv_footer_remonter_load_more">Remonter pour charger plus</string>
+    <string name="manager_rdv_footer_loading">loading ...</string>
+    <string name="alertDialogTitle">Confirmez SVP</string>
+    <string name="alertDialog_annuler">Annuler</string>
+    <string name="alertDialog_OK">OK</string>
+    <string name="alertConfirmTitle">Merci</string>
+    <string name="alertConfirmMessage">Bon entretien !</string>
+    <string name="alertConfirm_fermer">Fermer</string>
 </resources>
