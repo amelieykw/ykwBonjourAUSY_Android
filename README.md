@@ -171,7 +171,7 @@ use bonjourausy
 
 #### Attention:
 1. All the images you build are local. So you can only use app in Genymotion to interact with the server side.
-If you want to use a real Android device to test, you should first upload all your local images to the docker cloud platform (first create a node of DigitalOcean, then copy the content of file docker-cloud.yml to create a stack, deploy the stack, then open the service link into the browser, you'll see the same content of webpage).
+If you want to use a real Android device to test, you should first upload all your local images to the docker cloud platform (first create a node of DigitalOcean, then copy the content of file docker-cloud.yml to create a stack, deploy the stack, then open the service link into the browser, you'll see the same content of webpage). The problem is that we cannot open the page if we link the Internet of AUSY because of the firewall. But if we use other like the hot spot of our own phone, we can open it without any problems.
 
 2. You can test everything with Genymotion (version for personal use) except the fonction of SMS. 
 To send the SMS, you have 2 way:
