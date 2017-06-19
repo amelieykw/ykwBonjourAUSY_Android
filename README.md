@@ -104,7 +104,11 @@ There are 4 images you should build:
 - amelieykw/bonjourausy_mysql: latest
 ```
 
-6. Check the IP address of your docker machine by:
+6. The create all the container on this docker machine, run this command in the root of server-part project:
+```
+docker-compose up -d
+```
+Check the IP address of your docker machine by:
 ```
 docker-machine ip MACHINE_NAME
 ```
@@ -146,6 +150,41 @@ use bonjourausy
 2. Genymotion
 
 #### STEP:
-1. change the docker machine ip address in 
+1. change the docker machine ip address in /app/build.gradle to your docker machine ip address.
+```
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
+    defaultConfig {
+        applicationId "com.ausy.yu.bonjourausy"
+        minSdkVersion 15
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "int", "LIMIT", "100"
+        buildConfigField "String", "BASEURL", "\"http://192.168.99.100:8080/\""
+        buildConfigField "int", "CACHETIME", "432000" // 5days
+    }
+```
+2. Launche the app on Genymotion, Android Tablet Nexus 9 to test if there's a problem.
+
+#### Attention:
+1. All the images you build are local. So you can only use app in Genymotion to interact with the server side.
+If you want to use a real Android device to test, you should first upload all your local images to the docker cloud platform (first create a node of DigitalOcean, then copy the content of file docker-cloud.yml to create a stack, deploy the stack, then open the service link into the browser, you'll see the same content of webpage).
+
+2. You can test everything with Genymotion (version for personal use) except the fonction of SMS. 
+To send the SMS, you have 2 way:
+* buy the Genymotion version professional
+* test it with the real Android Device + Server running on Docker Cloud 
+
+3. About the Structure of Android app, I'll upload the framework at noon.
+
+#### Docker Cloud Platform which I use:
+https://cloud.docker.com/app/amelieykw/dashboard/onboarding/cloud-registry
+
+Login:
+amelieykw1991@gmail.com
+MickyMouse1991
 
 
