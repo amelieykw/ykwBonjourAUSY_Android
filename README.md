@@ -188,3 +188,9 @@ amelieykw1991@gmail.com
 MickyMouse1991
 
 
+## Helpful reading:
+1. docker command helpful for this project:
+http://www.jianshu.com/p/168abd5ec825
+
+2. differences of docker for Mac and Linux:
+http://www.jianshu.com/p/22239a8a8e6e
