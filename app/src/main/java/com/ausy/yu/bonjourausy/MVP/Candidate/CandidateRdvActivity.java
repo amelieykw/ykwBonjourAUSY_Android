@@ -1,9 +1,11 @@
 package com.ausy.yu.bonjourausy.MVP.Candidate;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.DividerItemDecoration;
@@ -15,17 +17,18 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ausy.yu.bonjourausy.MVP.Base.BaseAppForInjection;
 import com.ausy.yu.bonjourausy.MVP.Base.RdvView;
-import com.ausy.yu.bonjourausy.MVP.Manager.ManagerRdvActivity;
 import com.ausy.yu.bonjourausy.MVP.Manager.ManagerRdvPresenter;
 import com.ausy.yu.bonjourausy.MVP.RecyclerViewAdapter.BackgroundItemDecoration;
+import com.ausy.yu.bonjourausy.MVP.RecyclerViewAdapter.CandidatRdvAdapter;
 import com.ausy.yu.bonjourausy.MVP.RecyclerViewAdapter.ManagerRdvAdapter;
 import com.ausy.yu.bonjourausy.R;
-import com.ausy.yu.bonjourausy.models.ManagerRdvItem;
+import com.ausy.yu.bonjourausy.models.RdvItem;
 import com.ausy.yu.bonjourausy.models.RdvListData;
 import com.ausy.yu.bonjourausy.networking.NetworkService;
 
@@ -43,16 +46,19 @@ public class CandidateRdvActivity extends BaseAppForInjection implements RdvView
     @Inject
     public NetworkService networkService;
     //    private String role;
-    public ManagerRdvPresenter managerRdvPresenter;
-    public SwipeRefreshLayout manager_rdv_swiperefreshlayout;
+    public CandidateRdvPresenter candidateRdvPresenter;
+    public SwipeRefreshLayout candidat_rdv_swiperefreshlayout;
     public LinearLayoutManager mLayoutManager;
-    private String site;
     private List<RdvListData> rdvs = null;
-    private List<ManagerRdvItem> managerRdvItemList = new ArrayList<ManagerRdvItem>();
-    private ManagerRdvAdapter managerRdvAdapter;
+    private List<RdvItem> candidatRdvItemList_dejaPriseEnCharge = new ArrayList<>();
+    private List<RdvItem> candidatRdvItemList_nonPriseEnCharge = new ArrayList<>();
+    private List<RdvItem> candidatRdvItemList = new ArrayList<>();
+    private CandidatRdvAdapter candidatRdvAdapter;
     private AlertDialog alert = null;
     private View alertDialog_view;
     private int lastVisibleItem;
+    private RecyclerView recyclerView;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -60,61 +66,64 @@ public class CandidateRdvActivity extends BaseAppForInjection implements RdvView
         setContentView(R.layout.activity_manager_rdv);
         getDaggerInjector().inject(this);
 
+        /***** Android Tablette never gose to sleep mode when app's running *****/
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         /***** RecyclerView *****/
         prepareRecyclerView();
 
-        /***** Get Data of User's Choise from MainActivity *****/
-        // get the request details from previous activity
-        getDataFromMainActivity();
-
         /***** Fetch Data from Server according to User's Choise  *****/
         // use the request details to get datas from server
-        managerRdvPresenter = new ManagerRdvPresenter(networkService, this);
-        managerRdvPresenter.getRdvList(site, 15, 0);
+        candidateRdvPresenter = new CandidateRdvPresenter(networkService, this);
+        candidateRdvPresenter.getRdvListForCandidatMode(15, 0);
     }
 
     /***** RecyclerView *****/
     private void prepareRecyclerView() {
         /***** RecyclerView *****/
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.manager_rdv_recycle_view);
-        managerRdvAdapter = new ManagerRdvAdapter(managerRdvItemList);
-        managerRdvAdapter.setOnItemClickListener(recyclerView_ManagerRdvAdapter_Item_Handler);
-        recyclerView.setAdapter(managerRdvAdapter);
+        recyclerView = (RecyclerView) findViewById(R.id.manager_rdv_recycle_view);
+        candidatRdvAdapter = new CandidatRdvAdapter(candidatRdvItemList);
+        candidatRdvAdapter.setOnItemClickListener(recyclerView_CandidatRdvAdapter_Item_Handler);
+        recyclerView.setAdapter(candidatRdvAdapter);
         mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         mLayoutManager.scrollToPosition(1);
         recyclerView.setLayoutManager(mLayoutManager);
         setHeaderView(recyclerView);
         setFooterView(recyclerView);
+
         /***** Add Divider *****/
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL);
         dividerItemDecoration.setDrawable(getResources().getDrawable(R.drawable.listdivider));
         recyclerView.addItemDecoration(dividerItemDecoration);
-        /***** Add Alternate Row Colors *****/
-        recyclerView.addItemDecoration(new BackgroundItemDecoration(R.color.color_item_oddBackground, R.color.color_item_evenBackground));
+
         /***** SwipeRefreshLayout *****/
-        manager_rdv_swiperefreshlayout = (SwipeRefreshLayout)this.findViewById(R.id.manager_rdv_swiperefreshlayout);
-        manager_rdv_swiperefreshlayout.setProgressBackgroundColorSchemeResource(android.R.color.white);
-        manager_rdv_swiperefreshlayout.setColorSchemeResources(android.R.color.holo_blue_light, android.R.color.holo_red_light, android.R.color.holo_orange_light, android.R.color.holo_green_light);
-        manager_rdv_swiperefreshlayout.setProgressViewOffset(false, 0, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24, getResources().getDisplayMetrics()));
+        candidat_rdv_swiperefreshlayout = (SwipeRefreshLayout)this.findViewById(R.id.manager_rdv_swiperefreshlayout);
+        candidat_rdv_swiperefreshlayout.setProgressBackgroundColorSchemeResource(android.R.color.white);
+        candidat_rdv_swiperefreshlayout.setColorSchemeResources(android.R.color.holo_blue_light, android.R.color.holo_red_light, android.R.color.holo_orange_light, android.R.color.holo_green_light);
+        candidat_rdv_swiperefreshlayout.setProgressViewOffset(false, 0, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24, getResources().getDisplayMetrics()));
+
         /***** SwipeRefreshLayout Scroll Down Refresh *****/
-        manager_rdv_swiperefreshlayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        candidat_rdv_swiperefreshlayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                managerRdvItemList.removeAll(managerRdvItemList);
-                managerRdvAdapter.notifyDataSetChanged();
-                managerRdvPresenter.getRdvList(site, 15, 0);
-                manager_rdv_swiperefreshlayout.setRefreshing(false);
+                candidatRdvItemList_nonPriseEnCharge.removeAll(candidatRdvItemList_nonPriseEnCharge);
+                candidatRdvItemList_dejaPriseEnCharge.removeAll(candidatRdvItemList_dejaPriseEnCharge);
+                candidatRdvItemList.removeAll(candidatRdvItemList);
+                candidatRdvAdapter.notifyDataSetChanged();
+                candidateRdvPresenter.getRdvListForCandidatMode(15, 0);
+                candidat_rdv_swiperefreshlayout.setRefreshing(false);
             }
         });
+
         /***** RecyclerView Pull Up Load More *****/
         recyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if (newState ==RecyclerView.SCROLL_STATE_IDLE && lastVisibleItem + 1 == managerRdvAdapter.getItemCount()) {
-                    managerRdvAdapter.changeMoreStatus(managerRdvAdapter.LOADING_MORE);
-                    managerRdvPresenter.getRdvList(site, 15, lastVisibleItem);
-                    managerRdvAdapter.changeMoreStatus(managerRdvAdapter.PULLUP_LOAD_MORE);
+                if (newState ==RecyclerView.SCROLL_STATE_IDLE && lastVisibleItem + 1 == candidatRdvAdapter.getItemCount()) {
+                    candidatRdvAdapter.changeMoreStatus(candidatRdvAdapter.LOADING_MORE);
+                    candidateRdvPresenter.getRdvListForCandidatMode(15, lastVisibleItem);
+                    candidatRdvAdapter.changeMoreStatus(candidatRdvAdapter.PULLUP_LOAD_MORE);
                 }
             }
             @Override
@@ -122,32 +131,24 @@ public class CandidateRdvActivity extends BaseAppForInjection implements RdvView
                 super.onScrolled(recyclerView,dx, dy);
                 lastVisibleItem = mLayoutManager.findLastVisibleItemPosition();
                 Log.d("lastVisibleItem", lastVisibleItem+"");
-                Log.d("getItemCount()", managerRdvAdapter.getItemCount()+"");
+                Log.d("getItemCount()", candidatRdvAdapter.getItemCount()+"");
             }
         });
     }
 
     private void setHeaderView(RecyclerView view){
         View header = LayoutInflater.from(this).inflate(R.layout.activity_manager_rdv_header, view, false);
-        managerRdvAdapter.setHeaderView(header);
+        candidatRdvAdapter.setHeaderView(header);
     }
 
     private void setFooterView(RecyclerView view){
         View footer = LayoutInflater.from(this).inflate(R.layout.activity_manager_rdv_footer, view, false);
-        managerRdvAdapter.setFooterView(footer);
+        candidatRdvAdapter.setFooterView(footer);
     }
 
-    /***** Get Data of User's Choise from MainActivity *****/
-    private void getDataFromMainActivity(){
-        Intent intent = getIntent();
-        Bundle bundle = intent.getExtras();
-        site = bundle.getString("site");
-    }
-
-    ManagerRdvAdapter.OnItemClickListener recyclerView_ManagerRdvAdapter_Item_Handler = new ManagerRdvAdapter.OnItemClickListener() {
+    CandidatRdvAdapter.OnItemClickListener recyclerView_CandidatRdvAdapter_Item_Handler = new CandidatRdvAdapter.OnItemClickListener() {
         @Override
         public void onItemClick(View view, int position) {
-            Log.d("rdvs", "rdvs"+rdvs.get(position-1).getHeurePrevu());
             RdvListData rdvListData = rdvs.get(position-1);
             String candidateNom = rdvListData.getRdvNom();
             String managerNom = rdvListData.getContactNom();
@@ -177,6 +178,23 @@ public class CandidateRdvActivity extends BaseAppForInjection implements RdvView
             TextView alertMessage = (TextView)alertDialog_view.findViewById(R.id.alertMessage);
             alertMessage.setText(alertDialogMessage);
 
+            // the dialog window will disappear if it dosen't be actived for 2 mins
+            alert.setOnShowListener(new DialogInterface.OnShowListener() {
+                @Override
+                public void onShow(DialogInterface dialog) {
+                    new CountDownTimer(120000, 1000) {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+                        }
+                        @Override
+                        public void onFinish() {
+                            alert.dismiss();
+                            itemViewSelected.setBackgroundColor(getResources().getColor(itemPositionSelected % 2 == 0 ? R.color.color_item_evenBackground : R.color.color_item_oddBackground));
+                        }
+                    }.start();
+                }
+            });
+
             // Button alertDialog Annuler
             alertDialog_view.findViewById(R.id.alertDialog_annuler).setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -189,7 +207,7 @@ public class CandidateRdvActivity extends BaseAppForInjection implements RdvView
             alertDialog_view.findViewById(R.id.alertDialog_OK).setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
 //                  sendSMS(itemPositionSelected);
-                    managerRdvPresenter.valideRdv(rdvs.get(itemPositionSelected-1).getRDVId());
+                    candidateRdvPresenter.candidatValideRdvPrevenirManager(rdvs.get(itemPositionSelected-1).getRDVId());
                     itemViewSelected.setBackgroundColor(getResources().getColor(R.color.color_item_blocked));
                     itemViewSelected.setClickable(false);
                     if(itemDismiss) {
@@ -208,6 +226,22 @@ public class CandidateRdvActivity extends BaseAppForInjection implements RdvView
             builder.setView(alertDialog_view);
             builder.setCancelable(false);
             alert = builder.create();
+
+            // the dialog window will disappear after 10 seconds if it dosen't be closed
+            alert.setOnShowListener(new DialogInterface.OnShowListener() {
+                @Override
+                public void onShow(DialogInterface dialog) {
+                    new CountDownTimer(10000, 1000) {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+                        }
+                        @Override
+                        public void onFinish() {
+                            alert.dismiss();
+                        }
+                    }.start();
+                }
+            });
 
             // Button alertDialog Annuler
             alertDialog_view.findViewById(R.id.alertDialog_fermer).setOnClickListener(new View.OnClickListener() {
@@ -246,15 +280,25 @@ public class CandidateRdvActivity extends BaseAppForInjection implements RdvView
             for(int i = 0; i < rdvsLength; i++) {
                 RdvListData rdv = rdvs.get(i);
                 String heurePrevue[] = rdv.getHeurePrevu().split(" ", 2)[1].split(":");
-                managerRdvItemList.add(new ManagerRdvItem(rdv.getRdvPrenom()+" "+rdv.getRdvNom(), "j'ai RDV avec "+rdv.getContactPrenom()+" "+rdv.getContactNom(), "à "+heurePrevue[0]+"h"+heurePrevue[1]));
+                Log.d("isValide : ", rdvs.get(i).isValide()+"");
+                if(rdvs.get(i).isValide() == false) {
+                    candidatRdvItemList_nonPriseEnCharge.add(new RdvItem(rdv.getRdvPrenom()+" "+rdv.getRdvNom(), "j'ai RDV avec "+rdv.getContactPrenom()+" "+rdv.getContactNom(), "à "+heurePrevue[0]+"h"+heurePrevue[1]));
+                }
+                if(rdvs.get(i).isValide() == true) {
+                    candidatRdvItemList_dejaPriseEnCharge.add(new RdvItem(rdv.getRdvPrenom()+" "+rdv.getRdvNom(), "j'ai RDV avec "+rdv.getContactPrenom()+" "+rdv.getContactNom(), "à "+heurePrevue[0]+"h"+heurePrevue[1]));
+                }
             }
         }
+        candidatRdvItemList.addAll(candidatRdvItemList_nonPriseEnCharge);
+        candidatRdvItemList.addAll(candidatRdvItemList_nonPriseEnCharge.size(), candidatRdvItemList_dejaPriseEnCharge);
+        candidatRdvAdapter.notifyDataSetChanged();
 
-        managerRdvAdapter.notifyDataSetChanged();
+        /***** Add Alternate Row Colors *****/
+        recyclerView.addItemDecoration(new BackgroundItemDecoration(R.color.color_item_oddBackground, R.color.color_item_evenBackground, "Candidat", candidatRdvItemList.size()-candidatRdvItemList_dejaPriseEnCharge.size(), candidatRdvItemList.size()-1));
     }
 
     @Override
-    public void valideRdvSuccess(int isValide) {
+    public void valideRdvSuccess(int isRelance1) {
         Toast.makeText(CandidateRdvActivity.this, "Ce RDV a été validé. Vous pouvez glisser pour actualiser!", Toast.LENGTH_LONG).show();
     }
 }

@@ -29,11 +29,11 @@ public class ManagerRdvPresenter {
         this.subscriptions = new CompositeSubscription();
     }
 
-    public void getRdvList(String siteLibelle, int maxNbOfData, int Offset) {
+    public void getRdvListForManageMode(String siteLibelle, int maxNbOfData, int Offset) {
 
         Log.d("site", "ManagerRdvPresenter => "+siteLibelle);
 
-        Subscription subscription = networkService.getRdvList(siteLibelle, maxNbOfData, Offset, new NetworkService.GetRdvListCallback() {
+        Subscription subscription = networkService.getRdvListForManageMode(siteLibelle, maxNbOfData, Offset, new NetworkService.GetRdvListCallback() {
             @Override
             public void onSuccess(List<RdvListData> listRdvListData) {
 //                Log.d("msg", "onSuccess mainPresenter getSiteList");
@@ -50,9 +50,9 @@ public class ManagerRdvPresenter {
         subscriptions.add(subscription);
     }
 
-    public void valideRdv(int RDVId) {
+    public void managerValideRdvPriseEnCharge(int RDVId) {
 
-        Subscription subscription = networkService.valideRdv(RDVId, new NetworkService.ValideRDVCallback() {
+        Subscription subscription = networkService.managerValideRdvPriseEnCharge(RDVId, new NetworkService.ValideRDVCallback() {
             @Override
             public void onSuccess(List<IsValide> isValide) {
                 Log.d("msg", "valideRdv : "+isValide.get(0).getValide());

@@ -3,6 +3,7 @@ package com.ausy.yu.bonjourausy.MVP.Candidate;
 import android.util.Log;
 
 import com.ausy.yu.bonjourausy.MVP.Base.RdvView;
+import com.ausy.yu.bonjourausy.models.IsRelance;
 import com.ausy.yu.bonjourausy.models.IsValide;
 import com.ausy.yu.bonjourausy.models.RdvListData;
 import com.ausy.yu.bonjourausy.networking.NetworkError;
@@ -29,14 +30,11 @@ public class CandidateRdvPresenter {
         this.subscriptions = new CompositeSubscription();
     }
 
-    public void getRdvList(String siteLibelle, int maxNbOfData, int Offset) {
+    public void getRdvListForCandidatMode(int maxNbOfData, int Offset) {
 
-        Log.d("site", "ManagerRdvPresenter => "+siteLibelle);
-
-        Subscription subscription = networkService.getRdvList(siteLibelle, maxNbOfData, Offset, new NetworkService.GetRdvListCallback() {
+        Subscription subscription = networkService.getRdvListForCandidatMode(maxNbOfData, Offset, new NetworkService.GetRdvListCallback() {
             @Override
             public void onSuccess(List<RdvListData> listRdvListData) {
-//                Log.d("msg", "onSuccess mainPresenter getSiteList");
                 rdvView.getRdvListSuccess(listRdvListData);
             }
 
@@ -50,13 +48,13 @@ public class CandidateRdvPresenter {
         subscriptions.add(subscription);
     }
 
-    public void valideRdv(int RDVId) {
+    public void candidatValideRdvPrevenirManager(int RDVId) {
 
-        Subscription subscription = networkService.valideRdv(RDVId, new NetworkService.ValideRDVCallback() {
+        Subscription subscription = networkService.candidatValideRdvPrevenirManager(RDVId, new NetworkService.Relance1RDVCallback() {
             @Override
-            public void onSuccess(List<IsValide> isValide) {
-                Log.d("msg", "valideRdv : "+isValide.get(0).getValide());
-                rdvView.valideRdvSuccess(isValide.get(0).getValide());
+            public void onSuccess(List<IsRelance> isRelance) {
+                Log.d("msg", "relance1Rdv : "+isRelance.get(0).getIsRelance());
+                rdvView.valideRdvSuccess(isRelance.get(0).getIsRelance());
             }
 
             @Override
@@ -70,7 +68,6 @@ public class CandidateRdvPresenter {
     }
 
     public void onStop() {
-        Log.d("msg", "ManagerRdvPresenter onStop");
         if(subscriptions!=null && !subscriptions.isUnsubscribed()) {
             subscriptions.unsubscribe();
         }

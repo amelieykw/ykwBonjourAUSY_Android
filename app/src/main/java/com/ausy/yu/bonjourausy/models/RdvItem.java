@@ -4,13 +4,13 @@ package com.ausy.yu.bonjourausy.models;
  * Created by yukaiwen on 19/04/2017.
  */
 
-public class ManagerRdvItem {
+public class RdvItem {
 
     private String candidateName, managerName, heurePrevu;
 
-    public ManagerRdvItem() {}
+    public RdvItem() {}
 
-    public ManagerRdvItem(String candidateName, String managerName, String heurePrevu) {
+    public RdvItem(String candidateName, String managerName, String heurePrevu) {
         this.candidateName = candidateName;
         this.managerName = managerName;
         this.heurePrevu = heurePrevu;

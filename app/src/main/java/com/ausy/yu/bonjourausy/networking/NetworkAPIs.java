@@ -1,5 +1,6 @@
 package com.ausy.yu.bonjourausy.networking;
 
+import com.ausy.yu.bonjourausy.models.IsRelance;
 import com.ausy.yu.bonjourausy.models.IsValide;
 import com.ausy.yu.bonjourausy.models.RdvListData;
 import com.ausy.yu.bonjourausy.models.SiteListData;
@@ -21,13 +22,21 @@ import rx.Observable;
 
 public interface NetworkAPIs {
 
+    /****** For MainActivity  ******/
     @GET("/fetch_data/all_sites.php")
     Observable<List<SiteListData>> getSiteList();
 
-    @GET("/fetch_data/rdv_info_of_one_site.php")
-    Observable<List<RdvListData>> getRdvList(@Query("sitelibelle") String sitelibelle, @Query("maxNbOfData") int maxNbOfData, @Query("offset") int offset);
+    /****** For Manage Mode ******/
+    @GET("/fetch_data/rdv_info_of_one_site_for_manager.php")
+    Observable<List<RdvListData>> getRdvListForManageMode(@Query("sitelibelle") String sitelibelle, @Query("maxNbOfData") int maxNbOfData, @Query("offset") int offset);
 
     @GET("/insert_data/valide_one_rdv_by_manager.php")
-    Observable<List<IsValide>> valideRdv(@Query("RDVId") int RDVId);
+    Observable<List<IsValide>> managerValideRdvPriseEnCharge(@Query("RDVId") int RDVId);
 
+    /****** For Candidat Mode ******/
+    @GET("/fetch_data/rdv_info_for_candidat.php")
+    Observable<List<RdvListData>> getRdvListForCandidatMode(@Query("maxNbOfData") int maxNbOfData, @Query("offset") int offset);
+
+    @GET("/insert_data/valide_one_rdv_by_candidat.php")
+    Observable<List<IsRelance>> candidatValideRdvPrevenirManager(@Query("RDVId") int RDVId);
 }

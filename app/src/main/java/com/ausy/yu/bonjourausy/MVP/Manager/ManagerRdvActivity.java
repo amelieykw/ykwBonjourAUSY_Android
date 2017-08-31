@@ -1,9 +1,11 @@
 package com.ausy.yu.bonjourausy.MVP.Manager;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -15,6 +17,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,13 +26,14 @@ import com.ausy.yu.bonjourausy.MVP.RecyclerViewAdapter.BackgroundItemDecoration;
 import com.ausy.yu.bonjourausy.MVP.RecyclerViewAdapter.ManagerRdvAdapter;
 import com.ausy.yu.bonjourausy.MVP.Base.BaseAppForInjection;
 import com.ausy.yu.bonjourausy.R;
-import com.ausy.yu.bonjourausy.models.ManagerRdvItem;
+import com.ausy.yu.bonjourausy.models.RdvItem;
 import com.ausy.yu.bonjourausy.models.RdvListData;
 import com.ausy.yu.bonjourausy.networking.NetworkService;
 
 
 import java.util.ArrayList;
 import java.util.List;
+
 
 import javax.inject.Inject;
 
@@ -53,7 +57,7 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
     public LinearLayoutManager mLayoutManager;
     private String site;
     private List<RdvListData> rdvs = null;
-    private List<ManagerRdvItem> managerRdvItemList = new ArrayList<ManagerRdvItem>();
+    private List<RdvItem> managerRdvItemList = new ArrayList<RdvItem>();
     private ManagerRdvAdapter managerRdvAdapter;
     private AlertDialog alert = null;
     private View alertDialog_view;
@@ -65,6 +69,9 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
         setContentView(R.layout.activity_manager_rdv);
         getDaggerInjector().inject(this);
 
+        /***** Android Tablette never gose to sleep mode when app's running *****/
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         /***** RecyclerView *****/
         prepareRecyclerView();
 
@@ -75,7 +82,7 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
         /***** Fetch Data from Server according to User's Choise  *****/
         // use the request details to get datas from server
         managerRdvPresenter = new ManagerRdvPresenter(networkService, this);
-        managerRdvPresenter.getRdvList(site, 15, 0);
+        managerRdvPresenter.getRdvListForManageMode(site, 15, 0);
     }
 
     /***** RecyclerView *****/
@@ -95,7 +102,7 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
         dividerItemDecoration.setDrawable(getResources().getDrawable(R.drawable.listdivider));
         recyclerView.addItemDecoration(dividerItemDecoration);
         /***** Add Alternate Row Colors *****/
-        recyclerView.addItemDecoration(new BackgroundItemDecoration(R.color.color_item_oddBackground, R.color.color_item_evenBackground));
+        recyclerView.addItemDecoration(new BackgroundItemDecoration(R.color.color_item_oddBackground, R.color.color_item_evenBackground, "Manager", managerRdvItemList.size()-1, managerRdvItemList.size()-1));
         /***** SwipeRefreshLayout *****/
         manager_rdv_swiperefreshlayout = (SwipeRefreshLayout)this.findViewById(R.id.manager_rdv_swiperefreshlayout);
         manager_rdv_swiperefreshlayout.setProgressBackgroundColorSchemeResource(android.R.color.white);
@@ -107,7 +114,7 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
             public void onRefresh() {
                 managerRdvItemList.removeAll(managerRdvItemList);
                 managerRdvAdapter.notifyDataSetChanged();
-                managerRdvPresenter.getRdvList(site, 15, 0);
+                managerRdvPresenter.getRdvListForManageMode(site, 15, 0);
                 manager_rdv_swiperefreshlayout.setRefreshing(false);
             }
         });
@@ -118,7 +125,7 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (newState ==RecyclerView.SCROLL_STATE_IDLE && lastVisibleItem + 1 == managerRdvAdapter.getItemCount()) {
                     managerRdvAdapter.changeMoreStatus(managerRdvAdapter.LOADING_MORE);
-                    managerRdvPresenter.getRdvList(site, 15, lastVisibleItem);
+                    managerRdvPresenter.getRdvListForManageMode(site, 15, lastVisibleItem);
                     managerRdvAdapter.changeMoreStatus(managerRdvAdapter.PULLUP_LOAD_MORE);
                 }
             }
@@ -182,6 +189,23 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
             TextView alertMessage = (TextView)alertDialog_view.findViewById(R.id.alertMessage);
             alertMessage.setText(alertDialogMessage);
 
+            // the dialog window will disappear if it dosen't be actived for 2 mins
+            alert.setOnShowListener(new DialogInterface.OnShowListener() {
+                @Override
+                public void onShow(DialogInterface dialog) {
+                    new CountDownTimer(120000, 1000) {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+                        }
+                        @Override
+                        public void onFinish() {
+                            alert.dismiss();
+                            itemViewSelected.setBackgroundColor(getResources().getColor(itemPositionSelected % 2 == 0 ? R.color.color_item_evenBackground : R.color.color_item_oddBackground));
+                        }
+                    }.start();
+                }
+            });
+
             // Button alertDialog Annuler
             alertDialog_view.findViewById(R.id.alertDialog_annuler).setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -194,7 +218,7 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
             alertDialog_view.findViewById(R.id.alertDialog_OK).setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
 //                  sendSMS(itemPositionSelected);
-                    managerRdvPresenter.valideRdv(rdvs.get(itemPositionSelected-1).getRDVId());
+                    managerRdvPresenter.managerValideRdvPriseEnCharge(rdvs.get(itemPositionSelected-1).getRDVId());
                     itemViewSelected.setBackgroundColor(getResources().getColor(R.color.color_item_blocked));
                     itemViewSelected.setClickable(false);
                     if(itemDismiss) {
@@ -208,11 +232,28 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
                     }
                 }
             });
+
         } else {
             alertDialog_view = ManagerRdvActivity.this.getLayoutInflater().inflate(R.layout.activity_manager_alert_dialog_confirm_custom, null, false);
             builder.setView(alertDialog_view);
             builder.setCancelable(false);
             alert = builder.create();
+
+            // the dialog window will disappear after 10 seconds if it dosen't be closed
+            alert.setOnShowListener(new DialogInterface.OnShowListener() {
+                @Override
+                public void onShow(DialogInterface dialog) {
+                    new CountDownTimer(10000, 1000) {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+                        }
+                        @Override
+                        public void onFinish() {
+                            alert.dismiss();
+                        }
+                    }.start();
+                }
+            });
 
             // Button alertDialog Annuler
             alertDialog_view.findViewById(R.id.alertDialog_fermer).setOnClickListener(new View.OnClickListener() {
@@ -220,6 +261,7 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
                     alert.dismiss();
                 }
             });
+
         }
         alert.show();           //show the alert dialog
         alert.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -251,7 +293,7 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
             for(int i = 0; i < rdvsLength; i++) {
                 RdvListData rdv = rdvs.get(i);
                 String heurePrevue[] = rdv.getHeurePrevu().split(" ", 2)[1].split(":");
-                managerRdvItemList.add(new ManagerRdvItem(rdv.getRdvPrenom()+" "+rdv.getRdvNom(), "j'ai RDV avec "+rdv.getContactPrenom()+" "+rdv.getContactNom(), "à "+heurePrevue[0]+"h"+heurePrevue[1]));
+                managerRdvItemList.add(new RdvItem(rdv.getRdvPrenom()+" "+rdv.getRdvNom(), "j'ai RDV avec "+rdv.getContactPrenom()+" "+rdv.getContactNom(), "à "+heurePrevue[0]+"h"+heurePrevue[1]));
             }
         }
 
@@ -260,6 +302,10 @@ public class ManagerRdvActivity extends BaseAppForInjection implements RdvView {
 
     @Override
     public void valideRdvSuccess(int isValide) {
-        Toast.makeText(ManagerRdvActivity.this, "Ce RDV a été validé. Vous pouvez glisser pour actualiser!", Toast.LENGTH_LONG).show();
+        if(isValide == 1) {
+            Toast.makeText(ManagerRdvActivity.this, "Ce RDV a été validé. Vous pouvez glisser pour actualiser!", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(ManagerRdvActivity.this, "Ce RDV n'a pas été validé. Demandez l'administrateur!", Toast.LENGTH_LONG).show();
+        }
     }
 }

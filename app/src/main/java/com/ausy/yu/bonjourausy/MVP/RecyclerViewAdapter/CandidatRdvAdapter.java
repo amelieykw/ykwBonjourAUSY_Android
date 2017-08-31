@@ -27,7 +27,7 @@ import java.util.List;
  * Created by yukaiwen on 19/04/2017.
  */
 // Note that we specify the custom ViewHolder which gives us access to our views
-public class ManagerRdvAdapter extends RecyclerView.Adapter<ManagerRdvAdapter.ViewHolder> {
+public class CandidatRdvAdapter extends RecyclerView.Adapter<CandidatRdvAdapter.ViewHolder> {
 
     public static final int  PULLUP_LOAD_MORE = 0;
     public static final int  LOADING_MORE = 1;
@@ -37,12 +37,12 @@ public class ManagerRdvAdapter extends RecyclerView.Adapter<ManagerRdvAdapter.Vi
     private static final int TYPE_FOOTER = 1;    // recyclerview item in one position is type of footer
     private static final int TYPE_NORMAL = 2;    // recyclerview item in one position is type of item of data list
 
-    private List<RdvItem> ManagerRdvItemList;
+    private List<RdvItem> CandidatRdvItemList;
     private View headerView = null;
     private View footerView = null;
 
-    public ManagerRdvAdapter(List<RdvItem> ManagerRdvItemList) {
-        this.ManagerRdvItemList = ManagerRdvItemList;
+    public CandidatRdvAdapter(List<RdvItem> CandidatRdvItemList) {
+        this.CandidatRdvItemList = CandidatRdvItemList;
     }
 
     public void setHeaderView(View header) {
@@ -57,7 +57,7 @@ public class ManagerRdvAdapter extends RecyclerView.Adapter<ManagerRdvAdapter.Vi
 
     /***** Methods for SwipeRefreshLayout Pull Up Load More *****/
     public void loadMoreItem(List<RdvItem> newDatas) {
-        ManagerRdvItemList.addAll(newDatas);
+        CandidatRdvItemList.addAll(newDatas);
         notifyDataSetChanged();
     }
 
@@ -72,7 +72,7 @@ public class ManagerRdvAdapter extends RecyclerView.Adapter<ManagerRdvAdapter.Vi
 
     // Usually involves inflating a layout from XML and returning the holder
     @Override
-    public ManagerRdvAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public CandidatRdvAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         ViewHolder viewHolder = null;
 
         switch(viewType)
@@ -92,7 +92,7 @@ public class ManagerRdvAdapter extends RecyclerView.Adapter<ManagerRdvAdapter.Vi
 
     // Involves populating data into the item through holder
     @Override
-    public void onBindViewHolder(ManagerRdvAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(CandidatRdvAdapter.ViewHolder holder, int position) {
         int rowViewType = getItemViewType(position);
 
         switch (rowViewType)
@@ -110,7 +110,7 @@ public class ManagerRdvAdapter extends RecyclerView.Adapter<ManagerRdvAdapter.Vi
                 }
                 break;
             default:
-                RdvItem RdvItem = ManagerRdvItemList.get(position-1);
+                RdvItem RdvItem = CandidatRdvItemList.get(position-1);
                 holder.txt_candidateName.setText(RdvItem.getCandidateName());
                 holder.txt_managerName.setText(RdvItem.getManagerName());
                 holder.txt_heurePrevu.setText(RdvItem.getHeurePrevu());
@@ -122,13 +122,13 @@ public class ManagerRdvAdapter extends RecyclerView.Adapter<ManagerRdvAdapter.Vi
     @Override
     public int getItemCount() {
         if(headerView == null && footerView == null){
-            return ManagerRdvItemList.size();
+            return CandidatRdvItemList.size();
         }else if(headerView == null){
-            return ManagerRdvItemList.size() + 1;
+            return CandidatRdvItemList.size() + 1;
         }else if(footerView == null){
-            return ManagerRdvItemList.size() + 1;
+            return CandidatRdvItemList.size() + 1;
         }else {
-            return ManagerRdvItemList.size() + 2;
+            return CandidatRdvItemList.size() + 2;
         }
     }
 

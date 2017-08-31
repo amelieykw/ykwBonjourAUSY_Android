@@ -2,6 +2,7 @@ package com.ausy.yu.bonjourausy.networking;
 
 import android.util.Log;
 
+import com.ausy.yu.bonjourausy.models.IsRelance;
 import com.ausy.yu.bonjourausy.models.IsValide;
 import com.ausy.yu.bonjourausy.models.RdvListData;
 import com.ausy.yu.bonjourausy.models.SiteListData;
@@ -65,15 +66,40 @@ public class NetworkService {
         void onError(NetworkError networkError);
     }
 
-    public Subscription getRdvList(String siteLibelle, int maxNbOfData, int Offset ,final GetRdvListCallback callback) {
+    public Subscription getRdvListForManageMode(String siteLibelle, int maxNbOfData, int Offset ,final GetRdvListCallback callback) {
 
-        Observable<List<RdvListData>> observableRdvListResponse = networkAPIs.getRdvList(siteLibelle, maxNbOfData, Offset);
+        Observable<List<RdvListData>> observableRdvListResponse = networkAPIs.getRdvListForManageMode(siteLibelle, maxNbOfData, Offset);
 
-        if(observableRdvListResponse == null) {
-            Log.d("msg", "observableSiteListResponse == null");
-        } else {
-            Log.d("msg", "observableSiteListResponse != null");
-        }
+        Subscription subscription = observableRdvListResponse
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<List<RdvListData>>() {
+                    @Override
+                    public void onCompleted() {
+                        Log.d("msg", "onCompleted");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d("msg", "callback.onError");
+                        Log.d("msg", "error : "+e.toString());
+                        callback.onError(new NetworkError(e));
+
+                    }
+
+                    @Override
+                    public void onNext(List<RdvListData> listRdvListData) {
+                        Log.d("msg", "callback.onSuccess");
+                        callback.onSuccess(listRdvListData);
+                    }
+                });
+
+        return subscription;
+    }
+
+    public Subscription getRdvListForCandidatMode(int maxNbOfData, int Offset ,final GetRdvListCallback callback) {
+
+        Observable<List<RdvListData>> observableRdvListResponse = networkAPIs.getRdvListForCandidatMode(maxNbOfData, Offset);
 
         Subscription subscription = observableRdvListResponse
                 .subscribeOn(Schedulers.io())
@@ -108,11 +134,11 @@ public class NetworkService {
         void onError(NetworkError networkError);
     }
 
-    public Subscription valideRdv(int RDVId, final ValideRDVCallback callback) {
+    public Subscription managerValideRdvPriseEnCharge(int RDVId, final ValideRDVCallback callback) {
 
         Log.d("RDVId", "NetworkService : "+RDVId);
 
-        Observable<List<IsValide>> observableRdvIdValideResponse = networkAPIs.valideRdv(RDVId);
+        Observable<List<IsValide>> observableRdvIdValideResponse = networkAPIs.managerValideRdvPriseEnCharge(RDVId);
 
         if(observableRdvIdValideResponse == null) {
             Log.d("msg", "observableRdvIdValideResponse == null");
@@ -152,4 +178,42 @@ public class NetworkService {
 
         void onError(NetworkError networkError);
     }
+
+    public Subscription candidatValideRdvPrevenirManager(int RDVId, final Relance1RDVCallback callback) {
+
+        Observable<List<IsRelance>> observableRdvIdRelanceResponse = networkAPIs.candidatValideRdvPrevenirManager(RDVId);
+
+        Subscription subscription = observableRdvIdRelanceResponse
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<List<IsRelance>>() {
+                    @Override
+                    public void onCompleted() {
+                        Log.d("msg", "onCompleted");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d("msg", "callback.onError");
+                        Log.d("msg", "error : "+e.toString());
+                        callback.onError(new NetworkError(e));
+
+                    }
+
+                    @Override
+                    public void onNext(List<IsRelance> isRelance) {
+                        Log.d("msg", "callback.onSuccess");
+                        callback.onSuccess(isRelance);
+                    }
+                });
+
+        return subscription;
+    }
+
+    public interface Relance1RDVCallback{
+        void onSuccess(List<IsRelance> isRelance);
+
+        void onError(NetworkError networkError);
+    }
+
 }

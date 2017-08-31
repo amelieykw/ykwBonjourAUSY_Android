@@ -5,6 +5,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -43,6 +44,8 @@ public class MainActivity extends BaseAppForInjection implements MainView {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getDaggerInjector().inject(this);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         initView();
 
@@ -86,31 +89,37 @@ public class MainActivity extends BaseAppForInjection implements MainView {
     // Suivant (Next)
     View.OnClickListener button_next_handler = new View.OnClickListener() {
         public void onClick(View v) {
-            if(chosed_data_role != null && chosed_data_site != null) {
+            if(chosed_data_role != null) {
 
                 Bundle bundle = new Bundle();
-//                bundle.putString("role", chosed_data_role);
-                bundle.putString("site", chosed_data_site);
 
                 if(chosed_data_role == "Manager") {
                     Intent intent_manager = new Intent(MainActivity.this, ManagerRdvActivity.class);
-                    intent_manager.putExtras(bundle);
+                    if(chosed_data_site != null) {
+                        bundle.putString("site", chosed_data_site);
+                        intent_manager.putExtras(bundle);
+                    }
                     startActivity(intent_manager);
-                } else if(chosed_data_role == "Candidate") {
+                } else if(chosed_data_role == "Candidat") {
                     Intent intent_candidate = new Intent(MainActivity.this, CandidateRdvActivity.class);
-                    intent_candidate.putExtras(bundle);
                     startActivity(intent_candidate);
                 } else {
                     Log.e("error", "something's wrong with chosed_data_role ");
                 }
 
-            } else if(chosed_data_role == null && chosed_data_site != null) {
+            } else if(chosed_data_site != null) {
                 Toast.makeText(MainActivity.this, "Vous n'avez pas encore choisi l'application que vous souhaitez installer", Toast.LENGTH_LONG).show();
-            } else if (chosed_data_role != null && chosed_data_site == null) {
-                Toast.makeText(MainActivity.this, "Vous n'avez pas encore choisi votre agence", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(MainActivity.this, "Veuillez choisir l'application que vous souhaitez installer et votre agence", Toast.LENGTH_LONG).show();
             }
+
+            Log.d("role : ", chosed_data_role);
+            if(chosed_data_site != null) {
+                Log.d("site : ", chosed_data_site);
+            }else {
+                Log.d("site : ", "");
+            }
+
         }
     };
 
@@ -164,22 +173,30 @@ public class MainActivity extends BaseAppForInjection implements MainView {
         return new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView parent, View view, int position, long id) {
-                if(btn == button_sites) {
-                    Log.d("msg", "btn == data_sites");
-                    Log.d("msg", "you click "+data_sites.get(position));
+                if(button_sites.isEnabled() && btn == button_sites) {
                     chosed_data_site = data_sites.get(position);
                     Toast.makeText(MainActivity.this, "Vous avez choisi "+chosed_data_site, Toast.LENGTH_LONG).show();
 
                     if(chosed_data_role != null && chosed_data_site != null) {
                         Toast.makeText(MainActivity.this, "Veuillez cliquer suivant", Toast.LENGTH_LONG).show();
                     }
-                }else if(btn == button_roles){
-                    Log.d("msg", "btn == data_roles");
-                    Log.d("msg", "you click "+data_roles.get(position));
+                }
+                if(btn == button_roles){
                     chosed_data_role = data_roles.get(position);
                     Toast.makeText(MainActivity.this, "Vous avez choisi "+chosed_data_role, Toast.LENGTH_LONG).show();
 
-                    if(chosed_data_role != null && chosed_data_site != null) {
+                    if(chosed_data_role == "Candidat") {
+                        button_sites.setEnabled(false);
+                        if(chosed_data_site != null) {
+                            chosed_data_site = null;
+                        }
+                    }
+                    if(chosed_data_role == "Manager"){
+                        button_sites.setEnabled(true);
+                    }
+
+                    if(chosed_data_role != null &&
+                            ((button_sites.isEnabled() && chosed_data_site != null) || (!button_sites.isEnabled() && chosed_data_site == null))) {
                         Toast.makeText(MainActivity.this, "Veuillez cliquer suivant", Toast.LENGTH_LONG).show();
                     }
                 }else{
